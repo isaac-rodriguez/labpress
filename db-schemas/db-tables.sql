@@ -19,10 +19,10 @@
 -- Table structure for table `ns_commentmeta`
 --
 
-DROP TABLE IF EXISTS `ns_commentmeta`;
+DROP TABLE IF EXISTS `lp_commentmeta`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `ns_commentmeta` (
+CREATE TABLE `lp_commentmeta` (
   `meta_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `comment_id` bigint(20) unsigned NOT NULL DEFAULT '0',
   `meta_key` varchar(255) DEFAULT NULL,
@@ -37,10 +37,10 @@ CREATE TABLE `ns_commentmeta` (
 -- Table structure for table `ns_comments`
 --
 
-DROP TABLE IF EXISTS `ns_comments`;
+DROP TABLE IF EXISTS `lp_comments`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `ns_comments` (
+CREATE TABLE `lp_comments` (
   `comment_ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `comment_post_ID` bigint(20) unsigned NOT NULL DEFAULT '0',
   `comment_author` tinytext NOT NULL,
@@ -68,10 +68,10 @@ CREATE TABLE `ns_comments` (
 -- Table structure for table `ns_links`
 --
 
-DROP TABLE IF EXISTS `ns_links`;
+DROP TABLE IF EXISTS `lp_links`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `ns_links` (
+CREATE TABLE `lp_links` (
   `link_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `link_url` varchar(255) NOT NULL DEFAULT '',
   `link_name` varchar(255) NOT NULL DEFAULT '',
@@ -94,10 +94,10 @@ CREATE TABLE `ns_links` (
 -- Table structure for table `ns_options`
 --
 
-DROP TABLE IF EXISTS `ns_options`;
+DROP TABLE IF EXISTS `lp_options`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `ns_options` (
+CREATE TABLE `lp_options` (
   `option_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `option_name` varchar(64) NOT NULL DEFAULT '',
   `option_value` longtext NOT NULL,
@@ -111,10 +111,10 @@ CREATE TABLE `ns_options` (
 -- Table structure for table `ns_postmeta`
 --
 
-DROP TABLE IF EXISTS `ns_postmeta`;
+DROP TABLE IF EXISTS `lp_postmeta`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `ns_postmeta` (
+CREATE TABLE `lp_postmeta` (
   `meta_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `post_id` bigint(20) unsigned NOT NULL DEFAULT '0',
   `meta_key` varchar(255) DEFAULT NULL,
@@ -129,10 +129,10 @@ CREATE TABLE `ns_postmeta` (
 -- Table structure for table `ns_posts`
 --
 
-DROP TABLE IF EXISTS `ns_posts`;
+DROP TABLE IF EXISTS `lp_posts`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `ns_posts` (
+CREATE TABLE `lp_posts` (
   `ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `post_author` bigint(20) unsigned NOT NULL DEFAULT '0',
   `post_date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
@@ -168,10 +168,10 @@ CREATE TABLE `ns_posts` (
 -- Table structure for table `ns_term_relationships`
 --
 
-DROP TABLE IF EXISTS `ns_term_relationships`;
+DROP TABLE IF EXISTS `lp_term_relationships`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `ns_term_relationships` (
+CREATE TABLE `lp_term_relationships` (
   `object_id` bigint(20) unsigned NOT NULL DEFAULT '0',
   `term_taxonomy_id` bigint(20) unsigned NOT NULL DEFAULT '0',
   `term_order` int(11) NOT NULL DEFAULT '0',
@@ -184,10 +184,10 @@ CREATE TABLE `ns_term_relationships` (
 -- Table structure for table `ns_term_taxonomy`
 --
 
-DROP TABLE IF EXISTS `ns_term_taxonomy`;
+DROP TABLE IF EXISTS `lp_term_taxonomy`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `ns_term_taxonomy` (
+CREATE TABLE `lp_term_taxonomy` (
   `term_taxonomy_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `term_id` bigint(20) unsigned NOT NULL DEFAULT '0',
   `taxonomy` varchar(32) NOT NULL DEFAULT '',
@@ -204,10 +204,10 @@ CREATE TABLE `ns_term_taxonomy` (
 -- Table structure for table `ns_terms`
 --
 
-DROP TABLE IF EXISTS `ns_terms`;
+DROP TABLE IF EXISTS `lp_terms`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `ns_terms` (
+CREATE TABLE `lp_terms` (
   `term_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(200) NOT NULL DEFAULT '',
   `slug` varchar(200) NOT NULL DEFAULT '',
@@ -222,10 +222,10 @@ CREATE TABLE `ns_terms` (
 -- Table structure for table `ns_usermeta`
 --
 
-DROP TABLE IF EXISTS `ns_usermeta`;
+DROP TABLE IF EXISTS `lp_usermeta`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `ns_usermeta` (
+CREATE TABLE `lp_usermeta` (
   `umeta_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` bigint(20) unsigned NOT NULL DEFAULT '0',
   `meta_key` varchar(255) DEFAULT NULL,
@@ -240,10 +240,10 @@ CREATE TABLE `ns_usermeta` (
 -- Table structure for table `ns_users`
 --
 
-DROP TABLE IF EXISTS `ns_users`;
+DROP TABLE IF EXISTS `lp_users`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `ns_users` (
+CREATE TABLE `lp_users` (
   `ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `user_login` varchar(60) NOT NULL DEFAULT '',
   `user_pass` varchar(64) NOT NULL DEFAULT '',
