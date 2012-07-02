@@ -1,0 +1,390 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Labpress" default="help" description="Labpress" basedir=".">
+
+    <property
+        file="build.properties"
+    />
+
+    <!-- ============================================  -->
+    <!-- Target: _get-env                               -->
+    <!-- ============================================  -->
+    <target name="_get-env" description="Request for the environment">
+        <input
+            propertyName="env"
+            validArgs="dev,test,prod"
+            defaultValue="dev"
+            message="Choice the environment"
+        />
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: _get-db-credentials                    -->
+    <!-- ============================================  -->
+    <target name="_get-db-credentials" description="Request root username and password for DB">
+        <input
+            propertyName="db.root-user"
+            defaultValue="root"
+            message="Insert root user of DB"
+            promptChar=":"
+        />
+        <input
+            propertyName="db.root-pass"
+            defaultValue="12345678"
+            message="Insert root password of DB"
+            promptChar=":"
+        />
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: _db-dump-data-table                    -->
+    <!-- ============================================  -->
+    <target name="_db-dump-data-table">
+        <echo message="DB dump of ${db.table}" />
+        <if>
+            <!-- If is NOT the mf_option. -->
+            <not>
+                <equals arg1="${db.table}" arg2="options" />
+            </not>
+            <then>
+                <exec command="mysqldump
+                                --host=${db.host.${env}}
+                                --user=${db.user.${env}}
+                                --password=${db.pass.${env}}
+                                --skip-lock-tables
+                                --no-create-info
+                                --replace
+                                ${db.name} ${db.prefix}${db.table}
+                                | sed 's/VALUES (/VALUES \n(/g'
+                                | sed 's/),(/),\n(/g'
+                                | sed 's/\(dev\|test\)${domain-regex}/${subdomain}${domain}/g'
+                                > ${path.db-schemas}/tables/${db.prefix}${db.table}.sql"
+                />
+            </then>
+            <!-- If is the mf_option, it filters the TRANSIENT data. -->
+            <else>
+                <exec command="mysqldump
+                                --host=${db.host.${env}}
+                                --user=${db.user.${env}}
+                                --password=${db.pass.${env}}
+                                --skip-lock-tables
+                                --no-create-info
+				--replace
+                                --where=&quot;${db.options.where}&quot;
+                                ${db.name} ${db.prefix}${db.table}
+                                | sed 's/VALUES (/VALUES \n(/g'
+                                | sed 's/),(/),\n(/g'
+                                | sed 's/\(dev\|test\)${domain-regex}/${subdomain}${domain}/g'
+                                > ${path.db-schemas}/tables/${db.prefix}${db.table}.sql"
+                />
+            </else>
+        </if>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: db-dump-data-all                      -->
+    <!-- ============================================  -->
+    <target name="db-dump-data-all" depends="_get-env">
+        <foreach
+            list="${db.tables-wp}"
+            param="db.table"
+            target="_db-dump-data-table"
+        />
+        <foreach
+            list="${db.tables-plugins}"
+            param="db.table"
+            target="_db-dump-data-table"
+        />
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: db-dump-data                          -->
+    <!-- ============================================  -->
+    <target name="db-dump-data" depends="_get-env">
+        <foreach
+            list="${db.table-options}"
+            param="db.table"
+            target="_db-dump-data-table"
+        />
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: db-dump-schema                        -->
+    <!-- ============================================  -->
+    <target name="db-dump-schema" depends="_get-env">
+        <echo message="DB dump schema" />
+        <exec command="mysqldump
+                        --host=${db.host.${env}}
+                        --user=${db.user.${env}}
+                        --password=${db.pass.${env}}
+                        --no-data
+                        --skip-lock-tables
+                        ${db.name}
+                        | sed 's/AUTO_INCREMENT=[0-9]* //g'
+                        > ${path.db-schemas}/db-tables.sql"
+        />
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: _db-execute-sql                       -->
+    <!-- ============================================  -->
+    <target name="_db-execute-sql">
+        <!-- Create the temporary file -->
+        <property name="file-tmp" value="${path.db-schemas}/tmp.sql" />
+        <!-- <touch file="${file-tmp}" /> -->
+        <echo file="${file-tmp}" message="${sql-script}" />
+
+        <if>
+            <!-- There is database for the connection -->
+            <isset property="db-name" />
+            <then>
+                <if>
+                    <!-- If the DB user hasn't password -->
+                    <equals arg1="${db.root-pass}" arg2="" />
+                    <then>
+                        <exec command="mysql -h${db.host.${env}} -u${db.root-user} ${db.name} &lt; ${file-tmp}" />
+                    </then>
+                    <!-- If the DB user has password -->
+                    <else>
+                        <exec command="mysql -h${db.host.${env}} -u${db.root-user} -p${db.root-pass} ${db.name} &lt; ${file-tmp}" />
+                    </else>
+                </if>
+            </then>
+            <!-- There isn't database for the connection -->
+            <else>
+                <if>
+                    <!-- If the DB user hasn't password -->
+                    <equals arg1="${db.root-pass}" arg2="" />
+                    <then>
+                        <exec command="mysql -h${db.host.${env}} -u${db.root-user} &lt; ${file-tmp}" />
+                    </then>
+                    <!-- If the DB user has password -->
+                    <else>
+                        <exec command="mysql -h${db.host.${env}} -u${db.root-user} -p${db.root-pass} &lt; ${file-tmp}" />
+                    </else>
+                </if>
+            </else>
+        </if>
+
+        <delete file="${file-tmp}" />
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: db-import-data-table                  -->
+    <!-- ============================================  -->
+    <target name="_db-import-data-table">
+        <echo message="Import the DB data ${db.table}" />
+
+        <loadfile file="${path.db-schemas}/tables/${db.prefix}${db.table}.sql" property="sql-script">
+            <filterchain>
+                <replaceregexp>
+                    <regexp
+                        pattern="www.${domain}"
+                        replace="${prefix.${env}}.${domain}"
+                        multiline="true"
+                    />
+                </replaceregexp>
+            </filterchain>
+        </loadfile>
+
+        <phingcall target="_db-execute-sql">
+            <property name="sql-script" value="${sql-script}" />
+            <property name="db-name" value="${db.name}" />
+        </phingcall>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: db-import-data                        -->
+    <!-- ============================================  -->
+    <target name="db-import-data" depends="_get-env, _get-db-credentials">
+        <echo message="Importing DB data" />
+        <foreach
+            list="${db.table-options}"
+            param="db.table"
+            target="_db-import-data-table"
+        />
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: db-import-data-all                    -->
+    <!-- ============================================  -->
+    <target name="db-import-data-all" depends="_get-env, _get-db-credentials">
+        <echo message="Importing all DB data" />
+        <foreach
+            list="${db.tables-wp}"
+            param="db.table"
+            target="_db-import-data-table"
+        />
+        <foreach
+            list="${db.tables-plugins}"
+            param="db.table"
+            target="_db-import-data-table"
+        />
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: db-import-schema                      -->
+    <!-- ============================================  -->
+    <target name="db-import-schema" depends="_get-env, _get-db-credentials">
+        <echo message="Importing DB schema" />
+
+        <!-- Create the schema -->
+        <loadfile file="${path.db-schemas}/db-schema.sql" property="sql-script">
+            <filterchain>
+                <replacetokens begintoken="@@" endtoken="@@">
+                    <token key="database" value="${db.name}" />
+                </replacetokens>
+            </filterchain>
+        </loadfile>
+        <phingcall target="_db-execute-sql">
+            <property name="sql-script" value="${sql-script}" />
+        </phingcall>
+
+        <!-- Create the user -->
+        <loadfile file="${path.db-schemas}/db-user.sql" property="sql-script">
+            <filterchain>
+                <replacetokens begintoken="@@" endtoken="@@">
+                    <token key="username" value="${db.user.${env}}" />
+                    <token key="password" value="${db.pass.${env}}" />
+                    <token key="database" value="${db.name}" />
+                </replacetokens>
+            </filterchain>
+        </loadfile>
+        <phingcall target="_db-execute-sql">
+            <property name="sql-script" value="${sql-script}" />
+        </phingcall>
+
+        <!-- Create the tables -->
+        <loadfile file="${path.db-schemas}/db-tables.sql" property="sql-script" />
+        <phingcall target="_db-execute-sql">
+            <property name="sql-script" value="${sql-script}" />
+            <property name="db-name" value="${db.name}" />
+        </phingcall>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: create-virtualhost                    -->
+    <!-- ============================================  -->
+    <target name="create-virtualhost" depends="_get-env">
+        <echo message="Creating the VirtualHost of Apache" />
+
+        <!-- Copy the virtualhost -->
+        <exec
+            command="ln -s ${path.configs}/apache/${env}.${domain}.conf /etc/httpd/conf.d/${domain}.conf"
+            outputProperty="output"
+        />
+
+        <if>
+            <or>
+                <equals arg1="${output}" arg2="" />
+                <equals arg1="${output}" arg2="ln: creating symbolic link `/etc/httpd/conf.d/${domain}.conf': File exists" />
+            </or>
+            <then>
+                <echo message="Restart Apache" />
+                <exec command="service httpd restart" />
+            </then>
+            <else>
+                <echo message="There was an error creating the virtualhost." />
+                <echo message="   ${output}" />
+                <fail message="You need to execute with root privileges." />
+            </else>
+        </if>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: allow-write                           -->
+    <!-- ============================================  -->
+    <target name="allow-permissions">
+        <echo message="Allowing permissions to write in folders" />
+
+        <!-- All files are of "developers.apache" -->
+        <chmod mode="0755" verbose="false">
+            <fileset dir="${project.basedir}">
+                <type type="dir" />
+            </fileset>
+        </chmod>
+        <chmod mode="0644" verbose="false">
+            <fileset dir="${project.basedir}">
+                <type type="file" />
+            </fileset>
+        </chmod>
+        <chown user="developers.apache" verbose="false">
+            <fileset dir="${project.basedir}" />
+        </chown>
+
+        <!-- Some folders need more permissions for apache user -->
+        <chmod mode="0775" verbose="false">
+            <fileset dir="${path.httpdocs}">
+                <type type="dir" />
+            </fileset>
+        </chmod>
+        <chmod mode="0664" verbose="false">
+            <fileset dir="${path.httpdocs}">
+                <type type="file" />
+            </fileset>
+        </chmod>
+
+        <!-- Permissions for plugin W3 Total Cache -->
+<!--
+        <chmod mode="0777" verbose="false">
+            <fileset dir="${path.wp-content}/w3tc">
+            </fileset>
+        </chmod>
+        <chmod mode="0777" verbose="false" file="${path.wp-content}//w3-total-cache-config.php" />
+-->
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: setup-db                              -->
+    <!-- ============================================  -->
+    <target
+        name="setup-db"
+        depends="_get-env, db-import-schema, db-import-data-all"
+    />
+
+    <!-- ============================================  -->
+    <!-- Target: setup-system                          -->
+    <!-- ============================================  -->
+    <target
+        name="setup-system"
+        depends="_get-env, allow-permissions, create-virtualhost"
+    />
+
+    <!-- ============================================  -->
+    <!-- Target: setup                                 -->
+    <!-- ============================================  -->
+    <target
+        name="setup-all"
+        depends="_get-env, allow-permissions, create-virtualhost, db-import-schema, db-import-data-all"
+    />
+
+    <!-- ============================================  -->
+    <!-- Target: help                                  -->
+    <!-- ============================================  -->
+    <target name="help" description="List of available targets">
+        <echo>
+
+    Phing ${phing.project.name}
+    -----------------------------
+    Options
+        = DB DUMP =
+        * db-dump-schema       : Dump schema from DB into SQL file.
+        * db-dump-data         : Dump data from some DB tables into SQL files.
+        * db-dump-data-all     : Dump data from all DB tables into SQL files.
+
+        = DB IMPORT =
+        * db-import-schema     : Create schema from SQL file to DB.
+        * db-import-data       : Import data from some SQL files to DB tables.
+        * db-import-data-all   : Import data from all SQL files to DB tables.
+
+        = OTHERS ===
+        * allow-permissions    : Allow permissions in the files.
+        * create-virtualhost   : Create the VirtualHost and restart Apache.
+
+        = SETUP ===
+        * setup-db          : Set up the project DB with all the data.
+        * setup-system      : Set up the project permissions and Apache configuration.
+        * setup-all         : Set up all the project (System + DB).
+        </echo>
+    </target>
+
+</project>

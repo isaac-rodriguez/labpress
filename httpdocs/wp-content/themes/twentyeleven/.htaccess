@@ -1,0 +1,33 @@
+# Disable the Authentication
+    AuthType None
+    Satisfy Any
+
+# Browser Cache
+    <IfModule mod_setenvif.c>
+        BrowserMatch ^Mozilla/4 gzip-only-text/html
+        BrowserMatch ^Mozilla/4\.0[678] no-gzip
+        BrowserMatch \bMSIE !no-gzip !gzip-only-text/html
+        BrowserMatch \bMSI[E] !no-gzip !gzip-only-text/html
+    </IfModule>
+
+    Header append Vary User-Agent env=!dont-vary
+
+    AddOutputFilterByType DEFLATE text/css application/x-javascript text/javascript text/x-component text/html text/richtext image/svg+xml text/plain text/xsd text/xsl text/xml image/x-icon
+
+    <FilesMatch "\.(css|js|htc|CSS|JS|HTC)$">
+        Header set Cache-Control "max-age=2592000, public"
+        FileETag None
+    </FilesMatch>
+
+    <FilesMatch "\.(html|htm|rtf|rtx|svg|svgz|txt|xsd|xsl|xml|HTML|HTM|RTF|RTX|SVG|SVGZ|TXT|XSD|XSL|XML)$">
+        FileETag None
+    </FilesMatch>
+
+    <FilesMatch "\.(asf|asx|wax|wmv|wmx|avi|bmp|class|divx|doc|docx|eot|exe|gif|gz|gzip|ico|jpg|jpeg|jpe|mdb|mid|midi|mov|qt|mp3|m4a|mp4|m4v|mpeg|mpg|mpe|mpp|otf|odb|odc|odf|odg|odp|ods|odt|ogg|pdf|png|pot|pps|ppt|pptx|ra|ram|svg|svgz|swf|tar|tif|tiff|ttf|ttc|wav|wma|woff|wri|xla|xls|xlsx|xlt|xlw|zip|ASF|ASX|WAX|WMV|WMX|AVI|BMP|CLASS|DIVX|DOC|DOCX|EOT|EXE|GIF|GZ|GZIP|ICO|JPG|JPEG|JPE|MDB|MID|MIDI|MOV|QT|MP3|M4A|MP4|M4V|MPEG|MPG|MPE|MPP|OTF|ODB|ODC|ODF|ODG|ODP|ODS|ODT|OGG|PDF|PNG|POT|PPS|PPT|PPTX|RA|RAM|SVG|SVGZ|SWF|TAR|TIF|TIFF|TTF|TTC|WAV|WMA|WOFF\WRI|XLA|XLS|XLSX|XLT|XLW|ZIP)$">
+        Header set Cache-Control "max-age=2592000, public"
+        FileETag None
+    </FilesMatch>
+
+    <FilesMatch "\.woff$">
+        SetOutputFilter DEFLATE
+    </FilesMatch>
